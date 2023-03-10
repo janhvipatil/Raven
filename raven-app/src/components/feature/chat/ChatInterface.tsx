@@ -1,10 +1,8 @@
 import { Avatar, AvatarBadge, Box, Button, HStack, Stack, Text, useColorMode, useDisclosure, useToast } from "@chakra-ui/react"
-import { useFrappeCreateDoc, useFrappeGetCall, useFrappeGetDocList } from "frappe-react-sdk"
+import { useFrappeCreateDoc, useFrappeGetCall } from "frappe-react-sdk"
 import { useContext } from "react"
 import { BiGlobe, BiHash, BiLockAlt } from "react-icons/bi"
-import { useFrappeEventListener } from "../../../hooks/useFrappeEventListener"
 import { ChannelData } from "../../../types/Channel/Channel"
-import { Message } from "../../../types/Messaging/Message"
 import { ChannelContext } from "../../../utils/channel/ChannelProvider"
 import { UserDataContext } from "../../../utils/user/UserDataProvider"
 import { AlertBanner } from "../../layout/AlertBanner"
@@ -24,34 +22,8 @@ export const ChatInterface = () => {
     const user = userData?.name
     const peer = Object.keys(channelMembers).filter((member) => member !== user)[0]
     const { data: channelList, error: channelListError } = useFrappeGetCall<{ message: ChannelData[] }>("raven.raven_channel_management.doctype.raven_channel.raven_channel.get_channel_list")
-    const { data, error, mutate } = useFrappeGetDocList<Message>('Raven Message', {
-        fields: ["text", "creation", "name", "owner", "message_type", "file"],
-        filters: [["channel_id", "=", channelData?.name ?? null]],
-        orderBy: {
-            field: "creation",
-            order: 'desc'
-        },
-        limit: 500
-    })
+
     const { colorMode } = useColorMode()
-
-    useFrappeEventListener('message_received', (data) => {
-        if (data.channel_id === channelData?.name) {
-            mutate()
-        }
-    })
-
-    useFrappeEventListener('message_deleted', (data) => {
-        if (data.channel_id === channelData?.name) {
-            mutate()
-        }
-    })
-
-    useFrappeEventListener('message_updated', (data) => {
-        if (data.channel_id === channelData?.name) {
-            mutate()
-        }
-    })
 
     const allMembers = Object.values(channelMembers).map((member) => {
         return {
@@ -66,6 +38,7 @@ export const ChatInterface = () => {
             value: channel.channel_name
         }
     })
+
 
     const { isOpen: isViewDetailsModalOpen, onOpen: onViewDetailsModalOpen, onClose: onViewDetailsModalClose } = useDisclosure()
     const { isOpen, onOpen, onClose } = useDisclosure()
@@ -99,15 +72,7 @@ export const ChatInterface = () => {
             })
     }
 
-    if (error) {
-        return (
-            <Box p={4}>
-                <AlertBanner status='error' heading={error.message}>{error.httpStatus}: {error.httpStatusText}</AlertBanner>
-            </Box>
-        )
-    }
-
-    else if (allChannels && allMembers) return (
+    if (allChannels && allMembers) return (
         <>
             <PageHeader>
                 {channelData && user &&
@@ -140,8 +105,8 @@ export const ChatInterface = () => {
                     <ViewOrAddMembersButton onClickViewMembers={onViewDetailsModalOpen} onClickAddMembers={onOpen} />}
             </PageHeader>
             <Stack h='calc(100vh - 54px)' justify={'flex-end'} p={4} overflow='hidden' mt='16'>
-                {data &&
-                    <ChatHistory messages={data} />
+                {channelData &&
+                    <ChatHistory channelName={channelData.name} />
                 }
                 {(user && user in channelMembers) || channelData?.type === 'Open' ?
                     <ChatInput channelID={channelData?.name ?? ''} allChannels={allChannels} allMembers={allMembers} /> :

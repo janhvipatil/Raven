@@ -92,11 +92,6 @@ export const ViewChannel = (props: RouteComponentProps<IdentityParam>): ReactEle
         return cm
     }, [data])
 
-    useFrappeEventListener('message_received', (data) => {
-        if (data.channel_id === channelID) {
-            refreshMessages()
-        }
-    })
 
     useFrappeEventListener('message_deleted', (data) => {
         if (data.channel_id === channelID) {

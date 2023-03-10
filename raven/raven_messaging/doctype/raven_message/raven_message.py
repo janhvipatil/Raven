@@ -33,7 +33,4 @@ def send_message(channel_id, text):
         'message_type': 'Text'
     })
     doc.insert()
-    frappe.publish_realtime('message_received', {
-                            'channel_id': channel_id}, after_commit=True)
-    frappe.db.commit()
     return "message sent"
